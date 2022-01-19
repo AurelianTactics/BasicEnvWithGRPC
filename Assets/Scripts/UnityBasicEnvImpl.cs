@@ -101,20 +101,18 @@ public class UnityBasicEnvImpl : UnityBasicEnv.UnityBasicEnvBase
 
 
 
-
-			Debug.Log("TEST writing note to request queue");
-			this.requestQueue.AddRequestQueueObject(note.Message, note.ActionObs);
-
-
-			//now testing with agentsession class and as class does some monobehavior
-			Debug.Log("TEST waiting for new note from agentSession");
-			var noteList = await this.agentSession.GetNoteResponse();
-			foreach (UnityBasicEnvNote ubeNote in noteList)
-			{
-				Debug.Log("TEST new note write is ");
-				Debug.Log(ubeNote);
-				await responseStream.WriteAsync(ubeNote);
-			}
+			//this is the working method
+			// Debug.Log("TEST writing note to request queue");
+			// this.requestQueue.AddRequestQueueObject(note.Message, note.ActionObs);
+			//now getting response back from monobehavior
+			// Debug.Log("TEST waiting for new note from agentSession");
+			// var noteList = await this.agentSession.GetNoteResponse();
+			// foreach (UnityBasicEnvNote ubeNote in noteList)
+			// {
+			// 	Debug.Log("TEST new note write is ");
+			// 	Debug.Log(ubeNote);
+			// 	await responseStream.WriteAsync(ubeNote);
+			// }
 
 			//await this.agentSession.GetNoteResponse();
 

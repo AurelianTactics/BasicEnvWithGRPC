@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using DmEnvRpc.V1;
 
 namespace AurelianTactics.BlackBoxRL
 {
@@ -44,9 +45,15 @@ namespace AurelianTactics.BlackBoxRL
 			
 		}
 
-		public void AddRequestQueueObject(string message, int actionInt)
+		// public void AddRequestQueueObject(string message, int actionInt)
+		// {
+		// 	var rqo = new RequestQueueObject(message, actionInt);
+		// 	this.rqoLinkedList.AddLast(rqo);
+		// }
+
+		public void AddRequestQueueObject(EnvironmentRequest ero)
 		{
-			var rqo = new RequestQueueObject(message, actionInt);
+			var rqo = new RequestQueueObject(ero);
 			this.rqoLinkedList.AddLast(rqo);
 		}
 
@@ -61,17 +68,48 @@ namespace AurelianTactics.BlackBoxRL
 	
 	public class RequestQueueObject
 	{
-		public string message;
-		public int actionInt;
+		public int requestType;
+		public Dictionary<string,List<int>> createWorldSettings;
 
-		public RequestQueueObject(string msg, int action)
-		{
-			this.message = msg;
-			this.actionInt = action;
+		public Dictionary<string, List<int>> unpackedTensorDict;
+
+		public RequestQueueObject(EnvironmentRequest ero){
+			this.requestType = (int)ero.PayloadCase;
+
+			unpackedTensorDict = TensorUtilities.UnpackRequestTensor(ero);
+			
 		}
+
+
+		// old way
+		// public string message;
+		// public int actionInt;
+
+		// public RequestQueueObject(string msg, int action)
+		// {
+		// 	this.message = msg;
+		// 	this.actionInt = action;
+		// }
 
 
 	}
 
 }
+
+
+
+    // CreateWorldRequest create_world = 1;
+    // JoinWorldRequest join_world = 2;
+    // StepRequest step = 3;
+    // ResetRequest reset = 4;
+    // ResetWorldRequest reset_world = 5;
+    // LeaveWorldRequest leave_world = 6;
+    // DestroyWorldRequest destroy_world = 7;
+
+    // // If the environment supports a specialized request not covered above it
+    // // can be sent this way.
+    // //
+    // // Slot 15 is the last slot which can be encoded with one byte.  See
+    // // https://developers.google.com/protocol-buffers/docs/proto3#assigning-field-numbers
+    // google.protobuf.Any extension = 15;
 

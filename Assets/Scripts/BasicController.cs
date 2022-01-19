@@ -4,7 +4,6 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using AurelianTactics.BlackBoxRL;
 using System.Threading.Tasks;
-using System.Threading.Tasks;
 using System;
 using System.Collections;
 
