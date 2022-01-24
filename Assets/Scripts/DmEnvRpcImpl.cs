@@ -80,7 +80,7 @@ public class DmEnvRpcImpl : DmEnvRpc.V1.Environment.EnvironmentBase
 			this.requestQueue.AddRequestQueueObject(envRequest);
             //now testing with agentsession class and as class does some monobehavior
 			Debug.Log("TEST waiting for envRespose from agentSession");
-            var envResponseList = await this.agentSession.GetEnvironmentResponseList();
+            var envResponseList = await this.agentSession.HandleEnvironmentRequest();
 			foreach (DmEnvRpc.V1.EnvironmentResponse ero in envResponseList)
 			{
 				Debug.Log("TEST new envRespose write is ");

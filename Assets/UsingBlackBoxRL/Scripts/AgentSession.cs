@@ -54,7 +54,9 @@ namespace AurelianTactics.BlackBoxRL
 		private bool done;
 
 		/// <summary>
-		/// StepReponse asks for state description. I think it's for handling resets (ie terminated, running, etc)
+		/// StepReponse asks for state description.
+		/// when state is RUNNING env can step with actions as normal
+		/// when TERMINATED or INTERRUPTED the next step action is ignored but state moves to running
 		/// </summary>
 		private EnvironmentStateType envStateType;
 
@@ -73,11 +75,21 @@ namespace AurelianTactics.BlackBoxRL
 		/// <summary>
 		/// Server sets some UID keys for passing tensor maps over gRPC
 		/// </summary>
-		const int UID_OBSERVATION_REWARD = 2003;
+		const int UID_OBSERVATION_REWARD = 2004;
 		/// <summary>
 		/// Server sets some UID keys for passing tensor maps over gRPC
 		/// </summary>
-		const int UID_OBSERVATION_AGENT = 2004;
+		const int UID_OBSERVATION_AGENT = 2003;
+
+		/// <summary>
+		/// Action spec gives info to the learner for valid actions. Gotten from avatar at start.
+		/// </summary>
+		TensorSpec actionSpec;
+		/// <summary>
+		/// Obs spec gives info to the learner for obs shapes and type. Gotten from avatar at start.
+		/// </summary>
+		TensorSpec observationSpec;
+		TensorSpec rewardSpec;
 
 
 		private int priorAction; //to do: change based on action shape
@@ -115,6 +127,14 @@ namespace AurelianTactics.BlackBoxRL
 			Debug.Log(blackBoxRLTask);
 
 			this.worldName = worldName;
+
+			// Debug.Log("TEST action and obs sepcs are");
+			this.avatar.ConfigAvatar();
+			this.actionSpec = avatar.GetActionSpec();
+			this.observationSpec = avatar.GetObservationSpec();
+			this.rewardSpec = avatar.GetRewardSpec();
+			// Debug.Log(this.actionSpec);
+			// Debug.Log(this.observationSpec);
 
 			//instantiate a prefab
 			//Obj = MonoBehaviour.Instantiate(object);
@@ -158,13 +178,13 @@ namespace AurelianTactics.BlackBoxRL
 		// }
 
 		// get all available actions agent can take
-		ActionSpec GetActionSpec()
+		TensorSpec GetActionSpec()
 		{
 			return this.avatar.GetActionSpec();
 		}
 
 		// get observation spec
-		ObservationSpec GetObservationSpec()
+		TensorSpec GetObservationSpec()
 		{
 			return this.avatar.GetObservationSpec();
 		}
@@ -218,23 +238,24 @@ namespace AurelianTactics.BlackBoxRL
 			this.done = this.blackBoxRLTask.GetDone();
 			this.reward = this.blackBoxRLTask.GetReward();
 
-			// alternative way
-			//SendInfoToCommunicationLayer("step");
-
-			//var stepNote = MakeUnityBasicEnvNote("step", this.observation, this.reward, this.done);
-			//ubeList.Add(stepNote);
-			var erObject = MakeEnvironmentResponseObject(EnvironmentResponse.StepFieldNumber);
-			eroList.Add(erObject);
             if(this.done)
             {
+				this.envStateType = EnvironmentStateType.Terminated;
+				var erObject = MakeEnvironmentResponseObject(EnvironmentResponse.StepFieldNumber);
+				eroList.Add(erObject);
+
 				Debug.Log("TEST: TakeAction is done, sending reset");
 				var resetMessage = await EpisodeReset();
 				//todo error handling
-				// var resetNote = MakeUnityBasicEnvNote("step", this.observation, this.reward, this.done);
-				// ubeList.Add(resetNote);
-				erObject = MakeEnvironmentResponseObject(EnvironmentResponse.ResetFieldNumber);
-				eroList.Add(erObject);
+				// I'm pretty sure I don't send back a reset request here, simply change the state
+				
+				// erObject = MakeEnvironmentResponseObject(EnvironmentResponse.ResetFieldNumber);
+				// eroList.Add(erObject);
 				Debug.Log("TEST: TakeAction is done, after reset");
+			}
+			else {
+				var erObject = MakeEnvironmentResponseObject(EnvironmentResponse.StepFieldNumber);
+				eroList.Add(erObject);
 			}
 			this.isReadyForRequestQueue = true;
 
@@ -311,7 +332,9 @@ namespace AurelianTactics.BlackBoxRL
 		}
 
 		//to do: test in Impl, expand, add error functionality
-
+		/// <summary>
+		/// Make response object per request type. Sent back by server to client.
+		/// </summary>
 		DmEnvRpc.V1.EnvironmentResponse MakeEnvironmentResponseObject(int responseType)
 		{
 			
@@ -320,39 +343,53 @@ namespace AurelianTactics.BlackBoxRL
 
 			if( responseType == DmEnvRpc.V1.EnvironmentRequest.StepFieldNumber){
 				DmEnvRpc.V1.StepResponse response = new StepResponse();
-				Debug.Log("To Do: send back obs, send back whether the env is runing or not (not running if done)");
+				Debug.Log("TEST sending back response done, obs, reward: " + this.envStateType + ", " + this.observation + ", " + this.reward);
 				response.State = this.envStateType;
+
+				Tensor agentTensor = new Tensor();
+				agentTensor.Floats = new Tensor.Types.FloatArray();
+				agentTensor.Floats.Array.Add(this.observation);
+				response.Observations[UID_OBSERVATION_AGENT] = agentTensor;
 
 				Tensor rewardTensor = new Tensor();
 				rewardTensor.Floats = new Tensor.Types.FloatArray();
 				rewardTensor.Floats.Array.Add(this.reward);
 				response.Observations[UID_OBSERVATION_REWARD] = rewardTensor;
-
-				Tensor agentTensor = new Tensor();
-				agentTensor.Floats = new Tensor.Types.FloatArray();
-				agentTensor.Floats.Array.Add(this.observation);
-				response.Observations[UID_OBSERVATION_REWARD] = agentTensor;
 				
 				erObject.Step = response;
 			}
 			else if( responseType == DmEnvRpc.V1.EnvironmentRequest.ResetFieldNumber){
+				Debug.Log("TEST: AS making env response object sending back reset");
 				DmEnvRpc.V1.ResetResponse response = new ResetResponse();
-            	Debug.Log("To Do: missing part of the response");
+				response.Specs = new ActionObservationSpecs();
+				response.Specs.Actions.Add(UID_ACTIONS, this.actionSpec);
+				response.Specs.Observations.Add(UID_OBSERVATION_AGENT, this.observationSpec);
+				response.Specs.Observations.Add(UID_OBSERVATION_REWARD, this.rewardSpec);
 				erObject.Reset = response;
 			}
-			else if( responseType == DmEnvRpc.V1.EnvironmentRequest.ResetWorldFieldNumber){
-				DmEnvRpc.V1.ResetWorldResponse response = new ResetWorldResponse();
-            	Debug.Log("To Do: missing part of the response");
-				erObject.ResetWorld = response;
-			}
+			// else if( responseType == DmEnvRpc.V1.EnvironmentRequest.ResetWorldFieldNumber){
+			// 	DmEnvRpc.V1.ResetWorldResponse response = new ResetWorldResponse();
+            // 	Debug.Log("To Do: missing part of the response");
+			// 	erObject.ResetWorld = response;
+			// }
 			else if( responseType == DmEnvRpc.V1.EnvironmentRequest.JoinWorldFieldNumber){
 				DmEnvRpc.V1.JoinWorldResponse response = new JoinWorldResponse();
-            	Debug.Log("To Do: missing part of the response");
+            	Debug.Log("TEST: joining world");
+				// proto example
+				// message JoinWorldResponse {
+				// 	ActionObservationSpecs specs = 1;
+				// }
+				response.Specs = new ActionObservationSpecs();
+				// response.Specs.Actions.Add(DmEnvRpc.V1.ActionObservationSpecs.ActionsFieldNumber, this.actionSpec);
+				// response.Specs.Observations.Add(DmEnvRpc.V1.ActionObservationSpecs.ObservationsFieldNumber, this.observationSpec);
+				response.Specs.Actions.Add(UID_ACTIONS, this.actionSpec);
+				response.Specs.Observations.Add(UID_OBSERVATION_AGENT, this.observationSpec);
+				response.Specs.Observations.Add(UID_OBSERVATION_REWARD, this.rewardSpec);
+				// Debug.Log("TEST: joining world adding obs spec");
 				erObject.JoinWorld = response;
 			}
 			else if( responseType == DmEnvRpc.V1.EnvironmentRequest.LeaveWorldFieldNumber){
 				DmEnvRpc.V1.LeaveWorldResponse response = new LeaveWorldResponse();
-            	Debug.Log("To Do: missing part of the response");
 				erObject.LeaveWorld = response;
 			}
 			else if( responseType == DmEnvRpc.V1.EnvironmentRequest.CreateWorldFieldNumber){
@@ -362,8 +399,8 @@ namespace AurelianTactics.BlackBoxRL
 			}
 			else if( responseType == DmEnvRpc.V1.EnvironmentRequest.DestroyWorldFieldNumber){
 				DmEnvRpc.V1.DestroyWorldResponse response = new DestroyWorldResponse();
-            	Debug.Log("To Do: missing part of the response");
 				erObject.DestroyWorld = response;
+				// no message back on destroyWorld
 			}
 			// else if( responseType == DmEnvRpc.V1.EnvironmentRequest.ExtensionFieldNumber){
 			// 	DmEnvRpc.V1 response = new Response();
@@ -390,37 +427,80 @@ namespace AurelianTactics.BlackBoxRL
 			// };
 		}
 
-		// client sends EnvironmentRequests to server
-		// server packages the requests into a requestQueue object in WTM
-		// server then asks for a response here
-		public async Task<List<DmEnvRpc.V1.EnvironmentResponse>> GetEnvironmentResponseList()
+		/// <summary>
+		/// client sends EnvironmentRequests to server
+		/// server packages the requests into a requestQueue object in WTM
+		/// server then asks for a response here
+		/// </summary>
+		public async Task<List<DmEnvRpc.V1.EnvironmentResponse>> HandleEnvironmentRequest()
 		{
-			Debug.Log("in GetEnvResponse 0");
+			Debug.Log("TEST: AS in HandleEnvironmentRequest 0");
 			List<DmEnvRpc.V1.EnvironmentResponse> eroList = new List<DmEnvRpc.V1.EnvironmentResponse>();
 			RequestQueueObject rqo = worldTimeManager.ProcessRequests();
 			//to do: rqo actual message
 			if (rqo != null)
 			{
-				Debug.Log("in GetEnvResponse 1 " + rqo.requestType);
+				Debug.Log("TEST: AS in HandleEnvironmentRequest 1 " + rqo.requestType);
 				if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.StepFieldNumber){
-					int action = 0;
-					//to do: error handling for actions not being set in during step
-					action = rqo.unpackedTensorDict["actions"][0];
-					//not sure how to handle requested_observations
-					eroList = await TakeAction(action);
+					Debug.Log("TEST: AS in HandleEnvironmentRequest 2 step " + rqo.requestType);
+					//reset on a terminated keeps it at terminated. reset on interrupted/running goes to interrupted
+					//first step moves from terminated/interuppted into running
+					if(this.envStateType == EnvironmentStateType.Running){
+						int action = 0;
+						//to do: error handling for actions not being set in during step
+						action = rqo.unpackedTensorDict["actions"][0];
+						//to do: handle requested_observations setting. just sending back the standard
+						eroList = await TakeAction(action);
+					}
+					else if( this.envStateType == EnvironmentStateType.Interrupted || this.envStateType == EnvironmentStateType.Terminated){
+						this.envStateType = EnvironmentStateType.Running;
+						var erObject = MakeEnvironmentResponseObject(rqo.requestType);
+						eroList.Add(erObject);
+					} else{
+						//to do error handling
+					}
+					
 				}
 				else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.ResetFieldNumber){
+					Debug.Log("TEST: AS in HandleEnvironmentRequest RESET 3 " + rqo.requestType);
+					//reset on a terminated keeps it at terminated. reset on interrupted/running goes to interrupted
+					//first step moves from terminated/interrupted into running
 
+					//to do: maybe warning if reset doesn't come at end of episode? eh maybe not necessary
+					//to do: handle reset settings
+					//to do: how to handle other state types and send an error
+					if( this.envStateType == EnvironmentStateType.Terminated){
+						this.envStateType = EnvironmentStateType.Terminated;
+					}
+					else if( this.envStateType == EnvironmentStateType.Interrupted || this.envStateType == EnvironmentStateType.Running){
+						this.envStateType = EnvironmentStateType.Interrupted;
+					}
+					
+					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
+					eroList.Add(erObject);
 				}
 				else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.JoinWorldFieldNumber){
+					//to do later
+					//join the world based on teh world_name and settings from the join world request
+					// message JoinWorldRequest {
+					// 	// The name of the world to join.
+					// 	string world_name = 1;
 
+					// 	// Agent-specific settings which define how to join the world, such as agent
+					// 	// name and class in an RPG.
+					// 	map<string, Tensor> settings = 2;
+					// }
+					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
+					eroList.Add(erObject);
 				}
 				else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.LeaveWorldFieldNumber){
-
+					//no messages sent on leave world request or response
+					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
+					eroList.Add(erObject);
 				}
-				else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.ResetWorldFieldNumber){
-
-				}
+				// else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.ResetWorldFieldNumber){
+					//to do
+				// }
 				else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.CreateWorldFieldNumber){
 					// CreateWorld comes in with config settings
 					// in this case just the reset position of the agent
@@ -434,7 +514,14 @@ namespace AurelianTactics.BlackBoxRL
 					eroList.Add(erObject);
 				}
 				else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.DestroyWorldFieldNumber){
-
+					//to do: 
+					//add actual logic for destroying the world
+					//add the worldName to the rqo and destroy that world
+					// message DestroyWorldRequest {
+					// 	string world_name = 1;
+					// }
+					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
+					eroList.Add(erObject);
 				}
 				else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.ExtensionFieldNumber){
 

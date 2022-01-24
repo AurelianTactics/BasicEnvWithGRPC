@@ -35,30 +35,51 @@ public class BasicServerScript : MonoBehaviour
 		dmImpl.AssignAgentSessionAndWTM(agentSession, worldTimeManager);
 		// ubeImpl = new UnityBasicEnvImpl();
 		// ubeImpl.AssignAgentSessionAndWTM(agentSession, worldTimeManager);
-
+		Debug.Log("TEST BasicServerScript starting server");
 		Server server = new Server
 		{
 			//Services = { UnityBasicEnv.BindService(new UnityBasicEnvImpl()) },
 			//Services = { UnityBasicEnv.BindService(ubeImpl) },
 			Services = { DmEnvRpc.V1.Environment.BindService(dmImpl) },
-			Ports = { new ServerPort("localhost", gRPCPort, ServerCredentials.Insecure) }
+			//Ports = { new ServerPort("localhost", gRPCPort, ServerCredentials.Insecure) }
+			Ports = { new ServerPort("0.0.0.0", gRPCPort, ServerCredentials.Insecure) }
 		};
 		server.Start();
+		Debug.Log("TEST BasicServerScript after starting the server, server is next");
+		Debug.Log(server);
+		Debug.Log("=== END TEST BasicServerScript after starting the server, server is next");
 
-		// seeing how to pack tensors
-		Debug.Log(" === START testing methods TENSOR ===");
-		Tensor tt = new Tensor();
-		//PrintMethods(tt);
-		tt.Floats = new Tensor.Types.FloatArray();
-		Debug.Log(" === START testing methods Floats ===");
-		//PrintMethods(tt.Floats);
-		Debug.Log(" === START testing methods Floats array ===");
-		//is a get_Array but is no set array
-		//PrintMethods(tt.Floats.Array);
-		tt.Floats.Array.Add(0.5f);
-		Debug.Log("Holy shit did i fucking finally do it?" );
-		Debug.Log( tt.Floats.Array);
-		Debug.Log(" === END testing methods ===");
+		// // seeing how to pack tensors
+		// Debug.Log(" === START testing methods JoinWorldResponse ===");
+		// DmEnvRpc.V1.JoinWorldResponse jwr = new DmEnvRpc.V1.JoinWorldResponse();
+		// PrintMethods(jwr);
+		// Debug.Log(" === START testing methods jwr.specs ===");
+		// jwr.Specs = new ActionObservationSpecs();
+		// PrintMethods(jwr.Specs);
+		// //jwr.Specs.ActionObservationSpecs[jwr.Specs.ActionObservationSpecs.ActionsFieldNumber] = new TensorSpec();
+		// Debug.Log(jwr.Specs);
+		
+		// Debug.Log(" === START testing methods jwr.specs.actions ===");
+		// PrintMethods(jwr.Specs.Actions);
+		// Debug.Log(" === START testing methods jwr.specs ===");
+		// TensorSpec ts = new TensorSpec{
+		// 	Name="agent_actions",
+		// 	Dtype=DmEnvRpc.V1.DataType.Int64
+		// };
+		// jwr.Specs.Actions.Add(1, ts); 
+		// Debug.Log(jwr.Specs.Actions);
+		// // Tensor tt = new Tensor();
+		// // //PrintMethods(tt);
+		// // tt.Floats = new Tensor.Types.FloatArray();
+		// // Debug.Log(" === START testing methods Floats ===");
+		// // //PrintMethods(tt.Floats);
+		// // Debug.Log(" === START testing methods Floats array ===");
+		// // //is a get_Array but is no set array
+		// // //PrintMethods(tt.Floats.Array);
+		// // tt.Floats.Array.Add(0.5f);
+		// // Debug.Log("Holy shit did i fucking finally do it?" );
+		// // Debug.Log( tt.Floats.Array);
+		// Debug.Log(" === END testing methods ===");
 
 		//this might actually work? idk
 		// var exampleTensorSpec = new TensorSpec{

@@ -1,0 +1,11 @@
+FROM scratch
+ADD basic_example /app/basic_example
+
+ENTRYPOINT [ "/app/basic_example/BasicExample.x86_64", \
+# Unity command-line flags.
+"-logfile", \
+"-batchmode", \
+"-noaudio", \
+# Other command-line flags.
+"--uri_address=[::]:30051" \
+]

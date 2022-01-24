@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
+using DmEnvRpc.V1;
 
 namespace AurelianTactics.BlackBoxRL
 {
@@ -14,6 +15,10 @@ namespace AurelianTactics.BlackBoxRL
 	
 
 	//to do:
+	//I'm creating the action and obs spec prior to joinworld when joinworld should be able to chagne those
+	//action and obs spec just dm env tensorspecs or should I have it still be its own custom class?
+	//base actions and obs sent back and available in unity editor based on the specs
+	//pick spec parts dynamically then package into specs
 	//how to format the actions? Needs to be done on creation? 
 		//I'm thinking define number of actions, min and max, continuous or discrete for each available action
 			//can flow from some config set up for the env
@@ -42,8 +47,9 @@ namespace AurelianTactics.BlackBoxRL
 
         public BasicController basicController;
 
-        ActionSpec actionSpec;
-		ObservationSpec observationSpec;
+        TensorSpec actionSpec;
+		TensorSpec observationSpec;
+		TensorSpec rewardSpec;
 		Dictionary<string, string> observation;
 		NextActionState nextActionState;
 		public List<int> actionList;
@@ -52,21 +58,32 @@ namespace AurelianTactics.BlackBoxRL
         void Start()
         {
 			Debug.Log("Avatar starting");
+
+			
         }
 
         //in paper, described as being on the game object so can send actions and what not through that attachment
         //here faking it and have a combat controller attached then sending actions through that
         //I need to attach the avatar to the scene and put on the combatController
 
-        public Avatar(string config)
+        public void ConfigAvatar(string config = "")
 		{
 			//to do: code to load the spec
 			//to do: code to turn spec into various variables
-			this.actionSpec = new ActionSpec();
-			this.observationSpec = new ObservationSpec();
+			this.actionSpec = new TensorSpec{
+				Name="agent_actions",
+				Dtype=DmEnvRpc.V1.DataType.Int32
+			};
+			this.observationSpec = new TensorSpec{
+				Name="agent_observations",
+				Dtype=DmEnvRpc.V1.DataType.Float
+			};
+			this.rewardSpec = new TensorSpec{
+				Name="reward",
+				Dtype=DmEnvRpc.V1.DataType.Float
+			};
 			this.nextActionState = NextActionState.Waiting;
-			this.actionList = new List<int>(new int[4]);
-			
+			this.actionList = new List<int>(new int[3]);		
 		}
 
 		// Action sent in from AgentSession (which gets action from WTM, which gets action from rpc and so on)
@@ -84,7 +101,7 @@ namespace AurelianTactics.BlackBoxRL
 		//to do: add mask
 		public List<int> GetAvailableActions()
 		{
-			return new List<int>(new int[this.actionSpec.numValues]);
+			return new List<int>(new int[this.actionList.Count]);
 		}
 
 		void SendSensorInformation()
@@ -98,14 +115,19 @@ namespace AurelianTactics.BlackBoxRL
 
 		}
 
-		public ObservationSpec GetObservationSpec()
+		public TensorSpec GetObservationSpec()
 		{
 			return this.observationSpec;
 		}
 
-		public ActionSpec GetActionSpec()
+		public TensorSpec GetActionSpec()
 		{
 			return this.actionSpec;
+		}
+
+		public TensorSpec GetRewardSpec()
+		{
+			return this.rewardSpec;
 		}
 
         // to do:

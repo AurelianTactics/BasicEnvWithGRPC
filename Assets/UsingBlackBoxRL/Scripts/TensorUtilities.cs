@@ -31,11 +31,23 @@ namespace AurelianTactics.BlackBoxRL
             int requestType = (int)erObject.PayloadCase;
 
             if( requestType == DmEnvRpc.V1.EnvironmentRequest.StepFieldNumber){
+                //to do error handling
+                Debug.Log("TEST: UnpackRequestTensor Step");
 				StepRequest rtObject = (StepRequest) erObject.Step;
-                //To do: action array might be handled differently if multi dimension array
-                foreach( var item in rtObject.Actions[UID_ACTIONS].Int64S.Array){
-                    unpackedDict["actions"].Add((int) item);
+                if( rtObject.Actions.ContainsKey(UID_ACTIONS)){
+                    Debug.Log("TEST: UnpackRequestTensor Step contains actions key");
+                    Debug.Log(rtObject.Actions[UID_ACTIONS]);
+                    //To do: action array might be handled differently if multi dimension array
+                    unpackedDict["actions"] = new List<int>();
+                    foreach( var item in rtObject.Actions[UID_ACTIONS].Int32S.Array){
+                        
+                        //Debug.Log("iterating through actions array");
+                        //Debug.Log(item);
+                        unpackedDict["actions"].Add((int) item);
+                        //Debug.Log("end iterating through actions array");
+                    }
                 }
+                
 			}
 			else if( requestType == DmEnvRpc.V1.EnvironmentRequest.ResetFieldNumber){
 				
