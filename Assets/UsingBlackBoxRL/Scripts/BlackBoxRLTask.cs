@@ -8,20 +8,17 @@ namespace AurelianTactics.BlackBoxRL
 {
 	/// <summary>
 	/// Sends and receives information to and from AgentSession
+	/// handles done, reward, start episode, and reset epiosode
 	/// </summary>
 	
 	//To do:
-    //code here for starting a new episode
-	//i think design docs say each agentsession has its own task
+	//rething the implementation of this: i think design docs say each agentsession has its own task, i'm not really doing it in that way
+	//abstract this and make it mroe dynamic
 	//design doc helps grab available avatar or create a new avatar for the agent. for now just having both in AgentSession
 	//tasks define and return the reward. i'm not sure how the reward manipulation logic should be done. In the task or in the scene?
-	//define done
-	//start a new episode
 	//LATER control time: many examples of this like speeding up/slowing down perception; starting new episode by letting x number of seconds go etc
-	//maybe add a reward clip
-	//add functions for getting the reward
-		//probably abstract this and then inherit and set up reward functions
 	//add function for telling done from the state
+	//more reward functionality like: reward penalty for choosing non available action, reward clip etc
 
 
 
@@ -64,12 +61,12 @@ namespace AurelianTactics.BlackBoxRL
 
         public async Task<string> StartEpisode()
         {
-			Debug.Log("TEST: in bbrltask, starting episode start");
+			//Debug.Log("TEST: in bbrltask, starting episode start");
 			/*How to start a new episode.
             A Task implements a StartEpisode function to begin a new episode.At the start of an episode,
             the simulation is also typically reset to a state drawn from a stationary distribution*/
 			var resetMessage = await basicController.ResetAgent(this.pos);
-			Debug.Log("TEST: in bbrltask, starting episode end");
+			//Debug.Log("TEST: in bbrltask, starting episode end");
 			return resetMessage;
 		}
 

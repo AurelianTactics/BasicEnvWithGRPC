@@ -1,10 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class ScalarActuator : System.Attribute
+namespace AurelianTactics.BlackBoxRL
 {
-    public ScalarActuator(string name)
+    /// <summary>
+	/// Something used in paper but not yet configured and implemented here
+	/// </summary>
+    public class ScalarActuator : System.Attribute
     {
+        public ScalarActuator(string name)
+        {
 
+        }
     }
+
 }

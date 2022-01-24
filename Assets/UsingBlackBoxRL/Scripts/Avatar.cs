@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
+using DmEnvRpc.V1;
 
 namespace AurelianTactics.BlackBoxRL
 {
@@ -9,27 +10,24 @@ namespace AurelianTactics.BlackBoxRL
 	/// Receives information from AgentSession to Actuators (sort of like actions)
 	/// Sends information to AgentSession from Sensors (sort of like observations)
 	/// DeepMind paper way is to attach an an Avatar to a game object and then have Acuators and Sensors be C# components
-	/// Example for now is just a generic 
 	/// </summary>
 	
 
 	//to do:
-	//how to format the actions? Needs to be done on creation? 
-		//I'm thinking define number of actions, min and max, continuous or discrete for each available action
-			//can flow from some config set up for the env
-			//return gym and dm_env convenient functions
-		//brainstorming: discrete vs. continuous. array min/maxed vs selecting one. action size for multiple actions
-		//action size static or increasing
-		//which data type to store it in: list, dictionary, array, 
-		//can probably format it based on some dm_env or gym prototype
+	//need to rethink how I'm designing this, in particular in relation to BBRL Task and multiple avatars
+	//abstract, inherit, make more customizable
+	//sending back/getting obs more dynamic
+	//be able to send back a variety of obs like the paper does
+	//reward spec: how I want to do things
+
+	//Bad sequencing: I'm creating the action and obs spec prior to joinworld when joinworld should be able to chagne those
+	//action and obs spec just dm env tensorspecs or should I have it still be its own custom class?
+	//fully implement all action and obs specs fields (ie the BlackBoxSense shit)
+	//how to format the action and specs
 	//how to handle invalid actions (maybe a default do nothing command that can be set upon creation)
-	//how to describe the observation
-		//where am I storing the global observation (maybe global avatar)
-		//where am I storing and defining the local observation
-	//do i need some sort of confirmation that the action is done so that things can progress?
-	//have to set up the actual spec file for things to be loaded
-	//need something that converst C# style action spec to the DM version
-		//either grpc or json, see how the actual connect work
+	//action masking (maybe here or agent session)
+
+	//able to handle a more generic env and send mroe generic commands get more generic info from that env
 
 
 	public class Avatar : MonoBehaviour
@@ -42,8 +40,9 @@ namespace AurelianTactics.BlackBoxRL
 
         public BasicController basicController;
 
-        ActionSpec actionSpec;
-		ObservationSpec observationSpec;
+        TensorSpec actionSpec;
+		TensorSpec observationSpec;
+		TensorSpec rewardSpec;
 		Dictionary<string, string> observation;
 		NextActionState nextActionState;
 		public List<int> actionList;
@@ -51,22 +50,31 @@ namespace AurelianTactics.BlackBoxRL
 
         void Start()
         {
-			Debug.Log("Avatar starting");
+			//Debug.Log("Avatar starting");
         }
 
         //in paper, described as being on the game object so can send actions and what not through that attachment
         //here faking it and have a combat controller attached then sending actions through that
         //I need to attach the avatar to the scene and put on the combatController
 
-        public Avatar(string config)
+        public void ConfigAvatar(string config = "")
 		{
 			//to do: code to load the spec
 			//to do: code to turn spec into various variables
-			this.actionSpec = new ActionSpec();
-			this.observationSpec = new ObservationSpec();
+			this.actionSpec = new TensorSpec{
+				Name="agent_actions",
+				Dtype=DmEnvRpc.V1.DataType.Int32
+			};
+			this.observationSpec = new TensorSpec{
+				Name="agent_observations",
+				Dtype=DmEnvRpc.V1.DataType.Float
+			};
+			this.rewardSpec = new TensorSpec{
+				Name="reward",
+				Dtype=DmEnvRpc.V1.DataType.Float
+			};
 			this.nextActionState = NextActionState.Waiting;
-			this.actionList = new List<int>(new int[4]);
-			
+			this.actionList = new List<int>(new int[3]);		
 		}
 
 		// Action sent in from AgentSession (which gets action from WTM, which gets action from rpc and so on)
@@ -84,7 +92,7 @@ namespace AurelianTactics.BlackBoxRL
 		//to do: add mask
 		public List<int> GetAvailableActions()
 		{
-			return new List<int>(new int[this.actionSpec.numValues]);
+			return new List<int>(new int[this.actionList.Count]);
 		}
 
 		void SendSensorInformation()
@@ -98,14 +106,19 @@ namespace AurelianTactics.BlackBoxRL
 
 		}
 
-		public ObservationSpec GetObservationSpec()
+		public TensorSpec GetObservationSpec()
 		{
 			return this.observationSpec;
 		}
 
-		public ActionSpec GetActionSpec()
+		public TensorSpec GetActionSpec()
 		{
 			return this.actionSpec;
+		}
+
+		public TensorSpec GetRewardSpec()
+		{
+			return this.rewardSpec;
 		}
 
         // to do:
