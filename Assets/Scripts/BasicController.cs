@@ -59,7 +59,7 @@ public class BasicController : MonoBehaviour
 	/// <param name="direction"></param>
 	async Task<string> MoveDirection(int direction)
     {
-		Debug.Log(" top of move Direction, direction and position are " + direction + " " + position);
+		//Debug.Log(" top of move Direction, direction and position are " + direction + " " + position);
         position += direction;
         if (position < k_MinPosition) { position = k_MinPosition; }
         if (position > k_MaxPosition) { position = k_MaxPosition; }
@@ -81,7 +81,7 @@ public class BasicController : MonoBehaviour
             lastReward += 1f;
         }
 
-		Debug.Log("TEST bottom of move Direction, direction and position are " + direction + " " + position);
+		//Debug.Log("TEST bottom of move Direction, direction and position are " + direction + " " + position);
 		//to do: try/catch block and step message
 		return "stepMessage";
 	}
