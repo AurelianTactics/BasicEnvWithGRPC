@@ -10,31 +10,24 @@ namespace AurelianTactics.BlackBoxRL
 	/// Receives information from AgentSession to Actuators (sort of like actions)
 	/// Sends information to AgentSession from Sensors (sort of like observations)
 	/// DeepMind paper way is to attach an an Avatar to a game object and then have Acuators and Sensors be C# components
-	/// Example for now is just a generic 
 	/// </summary>
 	
 
 	//to do:
-	//I'm creating the action and obs spec prior to joinworld when joinworld should be able to chagne those
+	//need to rethink how I'm designing this, in particular in relation to BBRL Task and multiple avatars
+	//abstract, inherit, make more customizable
+	//sending back/getting obs more dynamic
+	//be able to send back a variety of obs like the paper does
+	//reward spec: how I want to do things
+
+	//Bad sequencing: I'm creating the action and obs spec prior to joinworld when joinworld should be able to chagne those
 	//action and obs spec just dm env tensorspecs or should I have it still be its own custom class?
-	//base actions and obs sent back and available in unity editor based on the specs
-	//pick spec parts dynamically then package into specs
-	//how to format the actions? Needs to be done on creation? 
-		//I'm thinking define number of actions, min and max, continuous or discrete for each available action
-			//can flow from some config set up for the env
-			//return gym and dm_env convenient functions
-		//brainstorming: discrete vs. continuous. array min/maxed vs selecting one. action size for multiple actions
-		//action size static or increasing
-		//which data type to store it in: list, dictionary, array, 
-		//can probably format it based on some dm_env or gym prototype
+	//fully implement all action and obs specs fields (ie the BlackBoxSense shit)
+	//how to format the action and specs
 	//how to handle invalid actions (maybe a default do nothing command that can be set upon creation)
-	//how to describe the observation
-		//where am I storing the global observation (maybe global avatar)
-		//where am I storing and defining the local observation
-	//do i need some sort of confirmation that the action is done so that things can progress?
-	//have to set up the actual spec file for things to be loaded
-	//need something that converst C# style action spec to the DM version
-		//either grpc or json, see how the actual connect work
+	//action masking (maybe here or agent session)
+
+	//able to handle a more generic env and send mroe generic commands get more generic info from that env
 
 
 	public class Avatar : MonoBehaviour
@@ -57,9 +50,7 @@ namespace AurelianTactics.BlackBoxRL
 
         void Start()
         {
-			Debug.Log("Avatar starting");
-
-			
+			//Debug.Log("Avatar starting");
         }
 
         //in paper, described as being on the game object so can send actions and what not through that attachment

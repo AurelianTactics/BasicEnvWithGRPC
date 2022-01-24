@@ -13,10 +13,10 @@ namespace AurelianTactics.BlackBoxRL
     //to do
     //error checking and dictionary checking
     //env specific keys checking
-    //abstract functionality
-    //start with base class then go into specifics
+    //abstract functionality: start with base class then go into specifics
     //read the type from the tensor so it returns the proper type
     //python version: https://github.com/deepmind/dm_env_rpc/blob/master/dm_env_rpc/v1/tensor_utils.py#L85
+    //python versioning probably had a bunch of good ideas on things to implement
     //error handling for if dictionary doesn't contain anything
 
     public static class TensorUtilities {
@@ -32,11 +32,11 @@ namespace AurelianTactics.BlackBoxRL
 
             if( requestType == DmEnvRpc.V1.EnvironmentRequest.StepFieldNumber){
                 //to do error handling
-                Debug.Log("TEST: UnpackRequestTensor Step");
+                //Debug.Log("TEST: UnpackRequestTensor Step");
 				StepRequest rtObject = (StepRequest) erObject.Step;
                 if( rtObject.Actions.ContainsKey(UID_ACTIONS)){
-                    Debug.Log("TEST: UnpackRequestTensor Step contains actions key");
-                    Debug.Log(rtObject.Actions[UID_ACTIONS]);
+                    //Debug.Log("TEST: UnpackRequestTensor Step contains actions key");
+                    //Debug.Log(rtObject.Actions[UID_ACTIONS]);
                     //To do: action array might be handled differently if multi dimension array
                     unpackedDict["actions"] = new List<int>();
                     foreach( var item in rtObject.Actions[UID_ACTIONS].Int32S.Array){

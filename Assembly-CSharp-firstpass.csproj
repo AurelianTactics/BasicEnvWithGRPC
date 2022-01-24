@@ -640,8 +640,17 @@
  <Reference Include="Unity.Rider.Editor">
  <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/Unity.Rider.Editor.dll</HintPath>
  </Reference>
+ <Reference Include="Unity.Sysroot.Linux_x86_64">
+ <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/Unity.Sysroot.Linux_x86_64.dll</HintPath>
+ </Reference>
  <Reference Include="Unity.VisualStudio.Editor">
  <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll</HintPath>
+ </Reference>
+ <Reference Include="Unity.Toolchain.Linux-x86_64">
+ <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/Unity.Toolchain.Linux-x86_64.dll</HintPath>
+ </Reference>
+ <Reference Include="Unity.SysrootPackage.Editor">
+ <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/Unity.SysrootPackage.Editor.dll</HintPath>
  </Reference>
  <Reference Include="Unity.TextMeshPro">
  <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/Unity.TextMeshPro.dll</HintPath>
@@ -651,15 +660,6 @@
  </Reference>
  <Reference Include="UnityEditor.UI">
  <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
- </Reference>
- <Reference Include="Unity.Sysroot.Linux_x86_64">
- <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/Unity.Sysroot.Linux_x86_64.dll</HintPath>
- </Reference>
- <Reference Include="Unity.Toolchain.Linux-x86_64">
- <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/Unity.Toolchain.Linux-x86_64.dll</HintPath>
- </Reference>
- <Reference Include="Unity.SysrootPackage.Editor">
- <HintPath>/home/jim/projects/GitHub/BasicEnvWithGRPC/Library/ScriptAssemblies/Unity.SysrootPackage.Editor.dll</HintPath>
  </Reference>
   </ItemGroup>
   <ItemGroup>

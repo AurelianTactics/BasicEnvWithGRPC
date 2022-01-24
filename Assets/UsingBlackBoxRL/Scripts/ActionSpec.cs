@@ -4,8 +4,18 @@ using System.Collections.Generic;
 
 namespace AurelianTactics.BlackBoxRL
 {
+    /// <summary>
+    /// Not implemented
+    /// Eventually dynamically handle action and obs specs based on the env
+    /// at some point might build upon the code based here but idk
+    /// </summary>
+
+    /*
     public class ActionSpec
     {
+
+
+
         //dm_env bsuite catch 0 example
         //print(env.action_spec())
         //DiscreteArray(shape= (), dtype= int64, name= action, minimum= 0, maximum= 2, num_values= 3)
@@ -54,9 +64,7 @@ namespace AurelianTactics.BlackBoxRL
 
         }
 
-        /*
-        add function to send to agentsesson then to communication layer
-        */
+
     }
 
 
@@ -89,7 +97,7 @@ namespace AurelianTactics.BlackBoxRL
 
         }
     }
-
+    */
 
 
     //enums to hold status of action 
@@ -100,4 +108,5 @@ namespace AurelianTactics.BlackBoxRL
         InProgress, //env is inputing the action and updating the env 
         Finished //action has been finished, can clear the action and set to waiting
     }
+    
 }

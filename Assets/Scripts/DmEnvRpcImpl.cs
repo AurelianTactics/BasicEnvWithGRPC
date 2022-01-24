@@ -8,10 +8,21 @@ using AurelianTactics.BlackBoxRL;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-//DmEnvRpc.V1.Environment.EnvironmentBase.Process()
+/// <summary>
+/// Implements the GRPC functionality the compiled proto files in DmEnvRPC and DmEnvRPCGrpc
+/// </summary>
+
+/*
+To do:
+be able to handle multiple agent connects
+ie implement synchronization code like locking etc
+The balance between Session, WorldTimeManager, and session factory described in the paper is not really ideal
+I'm not quite sure I'm handling the grpc request response better
+some things are hard coded in that whoudl be dynamic configurations like the UID and WORLD_NAME
+
+*/
 
 public class DmEnvRpcImpl : DmEnvRpc.V1.Environment.EnvironmentBase
-//public class DmEnvRpcImpl : Environment.EnvironmentBase
 {
     readonly object myLock = new object();
 	public RequestQueue requestQueue;
@@ -25,29 +36,20 @@ public class DmEnvRpcImpl : DmEnvRpc.V1.Environment.EnvironmentBase
 
 	public DmEnvRpcImpl()
 	{
-		//this.requestQueue = new RequestQueue();
-		//responseList = new List<UnityBasicEnvNote>();
+
 	}
 
 	public void AssignAgentSession(AgentSession aSession)
 	{
-		Debug.Log("assigned agent session");
+		//Debug.Log("assigned agent session");
 		this.agentSession = aSession;
-		//Debug.Log("testing agent session");
-		//this.agentSession.GetNoteResponse();
-		//await this.agentSession.TestPrint(" init ");
 	}
 
 	public void AssignAgentSessionAndWTM(AgentSession aSession, WorldTimeManager wtm)
 	{
-		Debug.Log("assigned agent session");
+		//Debug.Log("assigned agent session");
 		this.agentSession = aSession;
 		this.requestQueue = wtm.requestQueue;
-		//Debug.Log("testing agent session");
-		//this.agentSession.GetNoteResponse();
-		//await this.agentSession.TestPrint(" init ");
-
-		//this.agentSession.TestAvatarPrint("testing in assign");
 	}
     
 
@@ -58,35 +60,34 @@ public class DmEnvRpcImpl : DmEnvRpc.V1.Environment.EnvironmentBase
       /// <param name="responseStream">Used for sending responses back to the client.</param>
       /// <param name="context">The context of the server-side call handler being invoked.</param>
       /// <returns>A task indicating completion of the handler.</returns>
-    //   public virtual global::System.Threading.Tasks.Task Process(grpc::IAsyncStreamReader<global::DmEnvRpc.V1.EnvironmentRequest> requestStream, 
-    // grpc::IServerStreamWriter<global::DmEnvRpc.V1.EnvironmentResponse> responseStream, grpc::ServerCallContext context)
-    //   {
-    //     throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
-    //   }
 	public override async Task Process(IAsyncStreamReader<DmEnvRpc.V1.EnvironmentRequest> requestStream, IServerStreamWriter<DmEnvRpc.V1.EnvironmentResponse> responseStream, 
 		ServerCallContext context)
 	{
-		
-
 		//Debug.Log("handling incoming chat before while");
 		while (await requestStream.MoveNext())
 		{
 			EnvironmentRequest envRequest = requestStream.Current;
-			Debug.Log("TEST handling incoming request in while loop, up next is the request");
-			Debug.Log(envRequest); //{ "createWorld": { "settings": { "seed": { "int64s": { "array": [ "1234" ] } } } } }
+			//Debug.Log("TEST handling incoming request in while loop, up next is the request");
+			//Debug.Log(envRequest); //{ "createWorld": { "settings": { "seed": { "int64s": { "array": [ "1234" ] } } } } }
 
             //working code
-            Debug.Log("TEST writing envRequest to request queue");
+            //Debug.Log("TEST writing envRequest to request queue");
 			this.requestQueue.AddRequestQueueObject(envRequest);
             //now testing with agentsession class and as class does some monobehavior
-			Debug.Log("TEST waiting for envRespose from agentSession");
+			//Debug.Log("TEST waiting for envRespose from agentSession");
             var envResponseList = await this.agentSession.HandleEnvironmentRequest();
 			foreach (DmEnvRpc.V1.EnvironmentResponse ero in envResponseList)
 			{
-				Debug.Log("TEST new envRespose write is ");
-				Debug.Log(ero);
+				//Debug.Log("TEST new envRespose write is ");
+				//Debug.Log(ero);
 				await responseStream.WriteAsync(ero);
 			}
+		}
+	}
+}
+
+/*
+scrap code for testing grpc requests, responses, and handling unpacking tensors
 
 
             //  THIS WORKS testing step
@@ -199,91 +200,4 @@ public class DmEnvRpcImpl : DmEnvRpc.V1.Environment.EnvironmentBase
 			//await responseStream.WriteAsync(new_note);
 
 			//await this.agentSession.TestMono("after note sent back");
-
-			//await this.agentSession.TestPrint(" pre request stream");
-			//this works example works now trying outside class
-			//TestNoteClass tnc = new TestNoteClass();
-			//var new_note = tnc.MakeUnityBasicEnvNote("step", 2, 0.3123f, true);
-			//Debug.Log("new note is ");
-			//await responseStream.WriteAsync(new_note);
-
-			//now trying with agentsession class
-			//await this.agentSession.TestPrint("testing inside request stream");
-			//var new_note = MakeUnityBasicEnvNote("step", 10, 1.23f, false);
-			//Debug.Log("new note is ");
-			//Debug.Log(new_note);
-			//await responseStream.WriteAsync(new_note);
-
-
-			
-
-
-			
-			// var noteList = await this.agentSession.GetNoteResponse();
-			// foreach (UnityBasicEnvNote ubeNote in noteList)
-			// {
-			// 	Debug.Log("TEST new note write is ");
-			// 	Debug.Log(ubeNote);
-			// 	await responseStream.WriteAsync(ubeNote);
-			// }
-		}
-
-	}
-
-    // dm_env_rpc sending stuff back and forth not as simple as my basic example
-    // convenience function for testing out sending responses
-    // DmEnvRpc.V1.EnvironmentResponse MakeEnvironmentResponseObject(int payloadCase)
-	// {
-    //     Debug.Log("making new EnvironmentResponseObject");
-    //     //python example response = dm_env_rpc_pb2.CreateWorldResponse(world_name=_WORLD_NAME)
-    //     //return new DmEnvRpc.V1.CreateWorldResponse(WORLD_NAME);
-    //     //var erObject = CreateWorldResponse();
-    //     //var erObject = new EnvironmentResponse();
-    //     //erObject = (DmEnvRpc.V1.CreateWorldResponse) erObject;
-        
-    //     DmEnvRpc.V1.CreateWorldResponse erObject = new CreateWorldResponse();
-    //     erObject.WorldName = WORLD_NAME;
-    //     return erObject;
-    //     // var erObject = DmEnvRpc.V1.CreateWorldResponse;
-    //     // erObject.WorldName = WORLD_NAME;
-    //     // return erObject;
-    //     //var erObject2 = new EnvironmentResponse(EnvironmentResponse.CreateWorldFieldNumber);
-    //     //erObject2.CreateWorld(WORLD_NAME);
-    //     //erObject.
-
-    //     // if( payloadCase == DmEnvRpc.V1.EnvironmentRequest.CreateWorldFieldNumber){
-    //     //     return new DmEnvRpc.V1.EnvironmentResponse
-    //     //     {
-    //     //         //DmEnvRpc.V1.CreateWorldResponse("UnityBasicEnvWorldName")
-    //     //     };
-    //     // }
-
-
-	// 	// Debug.Log("Error unable to find proper EnvironmentResponseObject");
-	// 	// return new DmEnvRpc.V1.EnvironmentResponse
-	// 	// {
-			
-	// 	// };
-    // }
-
-	// UnityBasicEnvNote MakeUnityBasicEnvNote(string message, int actionObs, float reward, bool done)
-	// {
-	// 	Debug.Log("making new unitybasicenv note");
-	// 	return new UnityBasicEnvNote
-	// 	{
-	// 		Message = message,
-	// 		ActionObs = actionObs,
-	// 		Reward = reward,
-	// 		Done = done
-	// 	};
-
-	// 	//return new RouteSummary
-	// 	//{
-	// 	//	PointCount = pointCount,
-	// 	//	FeatureCount = featureCount,
-	// 	//	Distance = distance,
-	// 	//	ElapsedTime = (int)(stopwatch.ElapsedMilliseconds / 1000)
-	// 	//};
-	// }
-    
-}
+*/
