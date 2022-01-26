@@ -25,6 +25,7 @@ Picture is an outline from the paper: https://arxiv.org/abs/2011.09294
 ## Agent/Learning Interface (Outside the Black Box)
 * End-to-end example training a model and solving an env using an existing RL library like Acme (currently just an env that does 100 timesteps).
 * Be able to use a trained model to perform inference. Outside the env and maybe embedded in the env.
+* Add an OpenAI gym adaptor to get env in gym format
 
 ## The Black Box
 * More black boxes to test algorithms/RL libraries on
