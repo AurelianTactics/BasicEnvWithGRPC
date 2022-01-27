@@ -35,7 +35,7 @@ Picture is an outline from the paper: https://arxiv.org/abs/2011.09294
 ## The communication layer: gRPC and dm_env_rpc improvements
 * OpenAI Gym adaptor similar to dm_env adaptor for RL learners that only work with gym type outputs
 * Better packing and unpacking of C# code (similar to this dm_env_rpc Python file)
-* Figure out if current version of Unity works with gRPC and what steps need to be taken (this issue)
+* Figure out if current version of Unity works with gRPC and what steps need to be taken (this issue: https://github.com/grpc/grpc-dotnet/issues/1309)
 * Debug the dm_env_rpc proto import bug
 * Multi-agent support
 * Confirm I'm handling the gRPC process the correct way
