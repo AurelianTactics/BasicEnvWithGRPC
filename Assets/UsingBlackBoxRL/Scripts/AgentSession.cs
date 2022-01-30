@@ -23,7 +23,8 @@ namespace AurelianTactics.BlackBoxRL
 	//lots needs to be abstracted and then inherit specific examples:
 		//agent session/action/obs/reward specs/avatars/tasks/world name/start env options/reset env options/join world options
 		//action checking
-
+	//probably want a dict of world names so can destroy/create/join that specific world. maybe wait to see what session factory looks like
+	//logic for leaveworld (sends in no request or response so probably need tos tore which world which agent is in and then some logic for what a leave looks like)
 	
 
 	//i'm thinking i instantiate/look for the avatars and tasks and attach them to agentsession in an iterable object
@@ -45,6 +46,7 @@ namespace AurelianTactics.BlackBoxRL
         Avatar avatar;
         BlackBoxRLTask blackBoxRLTask;
 		//BasicServerScript basicServerScript;
+		//Dictionary<string, bool> worldNameDict = new Dictionary<string, bool>();
 		string worldName; //CreateWorldResponse sends this back
 
 		private List<int> availableActions; //to do: change based on shape
@@ -121,13 +123,23 @@ namespace AurelianTactics.BlackBoxRL
 
 			this.worldName = worldName;
 
-			// Debug.Log("TEST action and obs sepcs are");
+			// Debug.Log("TEST action and obs specs are");
+			this.GetSpecs();
+			// Debug.Log(this.actionSpec);
+			// Debug.Log(this.observationSpec);
+		}
+
+		/// <summary>
+		/// Get the specs from the avatar
+		/// Passing config settings from JoinWorld, CreateWorld, Reset, ResetWorld can change the settings
+		/// New settings are passed to the Task which then can update the env/avatar
+		/// </summary>
+		void GetSpecs()
+		{
 			this.avatar.ConfigAvatar();
 			this.actionSpec = avatar.GetActionSpec();
 			this.observationSpec = avatar.GetObservationSpec();
 			this.rewardSpec = avatar.GetRewardSpec();
-			// Debug.Log(this.actionSpec);
-			// Debug.Log(this.observationSpec);
 		}
 
         async Task<string> EpisodeReset()
@@ -151,10 +163,10 @@ namespace AurelianTactics.BlackBoxRL
 			return this.avatar.GetObservationSpec();
 		}
 
-		public void GetAvailableActions()
-		{
-			this.availableActions = this.avatar.GetAvailableActions();
-		}
+		//public void GetAvailableActions()
+		//{
+		//	this.availableActions = this.avatar.GetAvailableActions();
+		//}
 
 		/// <summary>
 		/// Takes an action from a step request and returns a response
@@ -297,11 +309,12 @@ namespace AurelianTactics.BlackBoxRL
 				response.Specs.Observations.Add(UID_OBSERVATION_REWARD, this.rewardSpec);
 				erObject.Reset = response;
 			}
-			// else if( responseType == DmEnvRpc.V1.EnvironmentRequest.ResetWorldFieldNumber){
-			// 	DmEnvRpc.V1.ResetWorldResponse response = new ResetWorldResponse();
-            // 	Debug.Log("To Do: missing part of the response");
-			// 	erObject.ResetWorld = response;
-			// }
+			else if (responseType == DmEnvRpc.V1.EnvironmentRequest.ResetWorldFieldNumber)
+			{
+				DmEnvRpc.V1.ResetWorldResponse response = new ResetWorldResponse();
+				// doesn't send anything back
+				erObject.ResetWorld = response;
+			}
 			else if( responseType == DmEnvRpc.V1.EnvironmentRequest.JoinWorldFieldNumber){
 				DmEnvRpc.V1.JoinWorldResponse response = new JoinWorldResponse();
             	//Debug.Log("TEST: joining world");
@@ -392,7 +405,12 @@ namespace AurelianTactics.BlackBoxRL
 					else if( this.envStateType == EnvironmentStateType.Interrupted || this.envStateType == EnvironmentStateType.Running){
 						this.envStateType = EnvironmentStateType.Interrupted;
 					}
-					
+
+					// update the settings
+					this.blackBoxRLTask.UpdateSettings(rqo.rqSettings, this.avatar);
+					// get updated specs from the avatar
+					this.GetSpecs();
+
 					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
 					eroList.Add(erObject);
 				}
@@ -407,6 +425,13 @@ namespace AurelianTactics.BlackBoxRL
 					// 	// name and class in an RPG.
 					// 	map<string, Tensor> settings = 2;
 					// }
+
+					// update the settings
+					this.blackBoxRLTask.UpdateSettings(rqo.rqSettings, this.avatar);
+					// get updated specs from the avatar
+					this.GetSpecs();
+					//might possible have to reset somethign on a join world depending on the settings but leaving that for future
+
 					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
 					eroList.Add(erObject);
 				}
@@ -415,18 +440,41 @@ namespace AurelianTactics.BlackBoxRL
 					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
 					eroList.Add(erObject);
 				}
-				// else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.ResetWorldFieldNumber){
-					//to do
-				// }
+				else if (rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.ResetWorldFieldNumber)
+				{
+					// update the settings
+					this.blackBoxRLTask.UpdateSettings(rqo.rqSettings, this.avatar);
+					// get updated specs from the avatar
+					this.GetSpecs();
+
+					var resetMessage = await ResetWorld();
+					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
+					eroList.Add(erObject);
+				}
 				else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.CreateWorldFieldNumber){
 					// CreateWorld comes in with config settings
-					// in this case just the reset position of the agent
-					int startPosition = 10;
-					if (rqo.unpackedTensorDict.ContainsKey("start_position") ){
-						if(rqo.unpackedTensorDict["start_position"] != null && rqo.unpackedTensorDict["start_position"].Count > 0)
-							startPosition = rqo.unpackedTensorDict["start_position"][0];
-					}
-					var startMessage = await StartEnv(startPosition);
+
+					// Settings to create the world with.  This can define the level layout, the
+					// number of agents, the goal or game mode, or other universal settings.
+					// Agent-specific settings, such as anything which would change the action or
+					// observation spec, should go in the JoinWorldRequest.
+
+					//the old way: update it with the new way below
+					//int startPosition = 10;
+					//if (rqo.unpackedTensorDict.ContainsKey("start_position") ){
+					//	if(rqo.unpackedTensorDict["start_position"] != null && rqo.unpackedTensorDict["start_position"].Count > 0)
+					//		startPosition = rqo.unpackedTensorDict["start_position"][0];
+					//}
+					//var startMessage = await StartEnv(startPosition);
+
+					// update the settings
+					this.blackBoxRLTask.UpdateSettings(rqo.rqSettings, this.avatar);
+					// get updated specs from the avatar
+					this.GetSpecs();
+
+					// to do: setting should update the start position
+					var startMessage = await StartEnv();
+
 					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
 					eroList.Add(erObject);
 				}
@@ -437,8 +485,17 @@ namespace AurelianTactics.BlackBoxRL
 					// message DestroyWorldRequest {
 					// 	string world_name = 1;
 					// }
-					var erObject = MakeEnvironmentResponseObject(rqo.requestType);
-					eroList.Add(erObject);
+					if( rqo.joinDestroyWorldName == this.worldName)
+					{
+						var erObject = MakeEnvironmentResponseObject(rqo.requestType);
+						eroList.Add(erObject);
+					}
+					else
+					{
+						//world name is not found generate an error erObject
+						//var erObject = MakeEnvironmentResponseObject(DmEnvRpc.V1.EnvironmentResponse.Status.error); //i'm unclear on the actual error shit
+					}
+
 				}
 				else if( rqo.requestType == DmEnvRpc.V1.EnvironmentRequest.ExtensionFieldNumber){
 

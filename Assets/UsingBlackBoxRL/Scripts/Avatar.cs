@@ -19,6 +19,7 @@ namespace AurelianTactics.BlackBoxRL
 	//sending back/getting obs more dynamic
 	//be able to send back a variety of obs like the paper does
 	//reward spec: how I want to do things
+	//verifying the action is valid
 
 	//Bad sequencing: I'm creating the action and obs spec prior to joinworld when joinworld should be able to chagne those
 	//action and obs spec just dm env tensorspecs or should I have it still be its own custom class?
@@ -51,16 +52,24 @@ namespace AurelianTactics.BlackBoxRL
         void Start()
         {
 			//Debug.Log("Avatar starting");
-        }
+			//this.actionList = new List<int>(new int[3]);
+		}
 
         //in paper, described as being on the game object so can send actions and what not through that attachment
         //here faking it and have a combat controller attached then sending actions through that
         //I need to attach the avatar to the scene and put on the combatController
 
-        public void ConfigAvatar(string config = "")
+		/// <summary>
+		/// Settings can be sent in with Create/join/resetWorld and reset requests and
+		/// Specs can be changed based on those updated settings
+		/// </summary>
+		/// <param name="config"></param>
+        public void UpdateSpecs(string config = "")
 		{
 			//to do: code to load the spec
 			//to do: code to turn spec into various variables
+			//to do: get specs from env
+
 			this.actionSpec = new TensorSpec{
 				Name="agent_actions",
 				Dtype=DmEnvRpc.V1.DataType.Int32
@@ -74,7 +83,7 @@ namespace AurelianTactics.BlackBoxRL
 				Dtype=DmEnvRpc.V1.DataType.Float
 			};
 			this.nextActionState = NextActionState.Waiting;
-			this.actionList = new List<int>(new int[3]);		
+				
 		}
 
 		// Action sent in from AgentSession (which gets action from WTM, which gets action from rpc and so on)

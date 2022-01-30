@@ -19,21 +19,24 @@ namespace AurelianTactics.BlackBoxRL
 	//LATER control time: many examples of this like speeding up/slowing down perception; starting new episode by letting x number of seconds go etc
 	//add function for telling done from the state
 	//more reward functionality like: reward penalty for choosing non available action, reward clip etc
-
+	//setting keys should be string for name and key should verify the type
 
 
 	public class BlackBoxRLTask : MonoBehaviour
     {
         public BasicController basicController;
-
+		
         private float reward;
 		private bool done;
 		public int pos = 10; //example of env config option being passed from GRPC. I need to flesh this out a bit
 
+		Dictionary<string, string> settingKeys;
+		
 		public BlackBoxRLTask(string config)
 		{
 			this.reward = 0.0f;
 			this.done = false;
+			 
 		}
 
 
@@ -65,6 +68,31 @@ namespace AurelianTactics.BlackBoxRL
 			/*How to start a new episode.
             A Task implements a StartEpisode function to begin a new episode.At the start of an episode,
             the simulation is also typically reset to a state drawn from a stationary distribution*/
+			var resetMessage = await basicController.ResetAgent(this.pos);
+			//Debug.Log("TEST: in bbrltask, starting episode end");
+			return resetMessage;
+		}
+
+		/// <summary>
+		/// Based on settings from a request (unpacked into RequestQueueSettings object),
+		/// update an avatar which may change the action and obs specs
+		/// </summary>
+		/// <param name="rqs"></param>
+		/// <param name="ava"></param>
+		public void UpdateSettings(RequestQueueSettings rqs, Avatar ava)
+		{
+			// grab the settingsKeys from the envController
+
+			// to do: make a verification dict of allowable setting keys
+			
+			// pass the settings to the  envController
+
+			// update the specs in the avatar
+			ava.UpdateSpecs();
+		}
+
+		public async Task<string> ResetWorld()
+		{
 			var resetMessage = await basicController.ResetAgent(this.pos);
 			//Debug.Log("TEST: in bbrltask, starting episode end");
 			return resetMessage;

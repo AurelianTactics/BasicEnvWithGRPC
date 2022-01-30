@@ -46,7 +46,8 @@ namespace AurelianTactics.BlackBoxRL
 
 		public void AddRequestQueueObject(EnvironmentRequest ero)
 		{
-			var rqo = new RequestQueueObject(ero);
+			//var rqo = new RequestQueueObject(ero);
+			var rqo = TensorUtilities.CreateRequestQueueObject(ero);
 			this.rqoLinkedList.AddLast(rqo);
 		}
 
@@ -62,20 +63,42 @@ namespace AurelianTactics.BlackBoxRL
 	public class RequestQueueObject
 	{
 		public int requestType;
-		public Dictionary<string,List<int>> createWorldSettings;
-
+		//public Dictionary<string,List<int>> createWorldSettings;
 		public Dictionary<string, List<int>> unpackedTensorDict;
+		public RequestQueueSettings rqSettings;
+		public string requestWorldName;
 
-		public RequestQueueObject(EnvironmentRequest ero){
-			this.requestType = (int)ero.PayloadCase;
-
-			unpackedTensorDict = TensorUtilities.UnpackRequestTensor(ero);
-			
-		}
+		//public RequestQueueObject(EnvironmentRequest ero){
+		//	this.requestType = (int)ero.PayloadCase;
+		//	this.unpackedTensorDict = TensorUtilities.UnpackRequestTensor(ero);
+		//	this.rqSettings = TensorUtilities.UnpackRequestSettingsTensor(ero);
+		//	this.joinDestroyWorldName = TensorUtilities.UnpackWorldName(ero);
+		//}
 
 	}
 
+	// turn settings sensor into this class 
+	// tensor types can be 
+	// "Floats", "Doubles", "Int8S", "Int32S", "Int64S", "Uint8S", "Uint32S", "Uint64S", "Bools", "Strings", "Protos", "Shape"
+	public class RequestQueueSettings
+	{
+		//for now turning settings into these three types
+		public Dictionary<string, List<int>> settingsDictInt;
+		public Dictionary<string, List<float>> settingsDictFloat;
+		public Dictionary<string, List<string>> settingsDictString;
+
+		// I'm thinkign create in the TensorUtilities as needed
+		public RequestQueueSettings()
+		{
+			this.settingsDictInt = new Dictionary<string, List<int>>();
+			this.settingsDictFloat = new Dictionary<string, List<float>>();
+			this.settingsDictString = new Dictionary<string, List<string>>();
+		}
+	}
+
 }
+
+
 
     // CreateWorldRequest create_world = 1;
     // JoinWorldRequest join_world = 2;
